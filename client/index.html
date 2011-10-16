@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Catalog</title>
+    <link href="main.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" href="jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" href="splitter.js"></script>
+
+    <script type="text/javascript">
+        $().ready(function() {
+            // Main vertical splitter, anchored to the browser window
+            $("#splitter").split{
+                type: "v",
+                outline: true,
+                minLeft: 100, sizeLeft: 150, maxLeft: 250,
+                anchorToWindow: true,
+                accessKey: "L"
+            });
+            // Second vertical splitter, nested in the right pane of the main one.
+            $("#mid_right_container").splitter({
+                type: "v",
+                outline: true,
+                minRight: 100, sizeRight: 150, maxRight: 250,
+                accessKey: "R"
+            });
+        });         
+    </script>
+</head>
+<body>
+    <div id="splitter">
+        <div id="lcol">
+            <h1>Tags</h1>
+        </div>
+        <div id="mid_right_container">
+            <div id="mcol">
+                <h1>Matches</h1>
+            </div>
+            <div id="rcol">
+                <h1>Details</h1>
+            </div>
+        </div>
+    </div> 
+
+</body>
+</html>
+
