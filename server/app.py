@@ -1,13 +1,23 @@
-from paste import httpserver
+from paste import httpserver, fileapp
 from webob.dec import wsgify
 from webob import exc
-from webob import Response
+from webob import Response, Request
 from routes import Mapper, URLGenerator
+import os.path
+
+HOST = '127.0.0.1'
+PORT = 8080
 
 
-class Application(object):
+class CatalogApp(object):
     map = Mapper()
     map.connect('index', '/', method='index')
+    map.connect('static', '/s/{filename}', method='static')
+    
+    CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
+
+    def __init__(self):
+        self.dirapp = fileapp.DirectoryApp(self.CLIENT_PATH)
 
     @wsgify
     def __call__(self, req):
@@ -23,11 +33,17 @@ class Application(object):
         return getattr(self, method)(req, **kwargs)
 
     def index(self, req):
-        return Response('Hello')
-
+        # set the PATH_INFO to just filename, overriding the original URI 
+        req.environ['PATH_INFO'] = 'index.html'
+        return req.get_response(self.dirapp)
+        
+    def static(self, req, filename=None):
+        # set the PATH_INFO to just filename, overriding the original URI 
+        req.environ['PATH_INFO'] = filename
+        return req.get_response(self.dirapp)
 
 def main():
-    app = Application()
+    app = CatalogApp()
     httpserver.serve(app, host='127.0.0.1', port=8080)
 
 if __name__ == '__main__':
