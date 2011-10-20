@@ -4,24 +4,37 @@
     <meta charset="UTF-8"/>
     <title>Catalog</title>
     <link href="/s/main.css" type="text/css" rel="stylesheet" />
-    <script type="text/javascript" href="/s/jquery-1.6.4.min.js"></script>
-    <script type="text/javascript" href="/s/splitter.js"></script>
+    <script type="text/javascript" src="/s/jquery.min.js"></script>
+    <script type="text/javascript" src="/s/splitter.js"></script>
 
     <script type="text/javascript">
+        function refreshTags() {
+            $('#tag-list').empty()
+            
+            // todo: investigate replacing this with jquery's ajax converters
+            $.getJSON('/tags', function(data) {
+                    $.each(data, function(index, tagName) {
+                        $('#tag-list').append('<li>' + tagName + '</li>')
+                    })
+            })
+        }
+    
         $().ready(function() {
 
             $('#splitter').splitter({
                     type: 'v',
-                    minLeft: 100, 
-                    sizeLeft: 150,
-                    maxLeft: 250,
+                    minLeft: 300, 
+                    sizeLeft: 350,
+                    /* maxLeft: 450, */
             })
             $('#mid-right-container').splitter({
                     type: 'v',
-                    minRight: 100,
-                    sizeRight: 150, 
-                    maxRight: 250,
+                    minRight: 300,
+                    sizeRight: 350, 
+                    /* maxRight: 450, */
             })
+            
+            refreshTags()
         });         
     </script>
 </head>
@@ -29,17 +42,22 @@
     <div id="splitter">
         <div id="lcol">
             <h1>Tags</h1>
+            
+            <ol id="tag-list">
+            </ol>
         </div>
         <div id="mid-right-container">
             <div id="mcol">
                 <h1>Matches</h1>
+                
+                <ol id="match-list">
+                </ol>
             </div>
             <div id="rcol">
                 <h1>Details</h1>
             </div>
         </div>
-    </div> 
-
+    </div>
 </body>
 </html>
 

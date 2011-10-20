@@ -1,3 +1,4 @@
+import json
 from paste import httpserver, fileapp
 from webob.dec import wsgify
 from webob import exc
@@ -13,6 +14,7 @@ class CatalogApp(object):
     map = Mapper()
     map.connect('index', '/', method='index')
     map.connect('static', '/s/{filename}', method='static')
+    map.connect('tags', '/tags', method='list_tags')
     
     CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
 
@@ -41,6 +43,23 @@ class CatalogApp(object):
         # set the PATH_INFO to just filename, overriding the original URI 
         req.environ['PATH_INFO'] = filename
         return req.get_response(self.dirapp)
+        
+    def list_tags(self, req):
+        '''
+        generate a JSON list of tags
+        
+        '''
+        resp = Response(
+            body=json.dumps([
+                'Abstract Westerns',
+                'Aliens',
+                'Furious Cats',
+                'Librarian Propaganda',
+                'Marmoset documentaries',
+                'Pretentious',
+            ])
+        )
+        return resp
 
 def main():
     app = CatalogApp()
