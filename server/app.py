@@ -51,12 +51,37 @@ class CatalogApp(object):
         '''
         resp = Response(
             body=json.dumps([
+                'Absinthe dreams',
                 'Abstract Westerns',
                 'Aliens',
+                'Alter egos',
+                'Altered states',
+                'Alternative',
+                'Badminton',
+                'Barf',
+                'Bourgeoisie',
+                'Budget',
+                'Bullshit',
+                'Captialism',
+                'Communism',
+                'Construction',
+                'Electrical currents',
+                'Fables',
                 'Furious Cats',
+                'Gold rush',
+                'Hammers &amp; Hamsters',
                 'Librarian Propaganda',
                 'Marmoset documentaries',
-                'Pretentious',
+                'Mango production worldwide',
+                'Netherlands',
+                'Populism',
+                'Pretentious bullshit',
+                'Strychnine',
+                'Tow trucks',
+                'Underwater public transportation',
+                'Wilted vegetables',
+                'Xylophones',
+                'Zoological explosions',
             ])
         )
         return resp

@@ -16,6 +16,10 @@
                     $.each(data, function(index, tagName) {
                         $('#tag-list').append('<li>' + tagName + '</li>')
                     })
+                    $('#tag-list li').click( function() {
+                        $('#tag-list .sel').removeClass('sel')
+                        $(this).addClass('sel')
+                    })
             })
         }
     
@@ -41,20 +45,26 @@
 <body>
     <div id="splitter">
         <div id="lcol">
-            <h1>Tags</h1>
-            
-            <ol id="tag-list">
-            </ol>
+            <div class="col-pad"> 
+                <!-- todo: make this float when scrolled down -->
+                <h1>Tags</h1>
+                
+                <ol id="tag-list">
+                </ol>
+            </div>
         </div>
         <div id="mid-right-container">
             <div id="mcol">
-                <h1>Matches</h1>
-                
-                <ol id="match-list">
-                </ol>
+                <div class="col-pad">
+                    <h1 id="sel-tag"></h1>
+                    
+                    <ol id="match-list">
+                    </ol>
+                </div>
             </div>
             <div id="rcol">
-                <h1>Details</h1>
+                <div class="col-pad">
+                </div>
             </div>
         </div>
     </div>
