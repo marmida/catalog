@@ -8,6 +8,27 @@
     <script type="text/javascript" src="/s/splitter.js"></script>
 
     <script type="text/javascript">
+        function refreshMatches(tagName) {
+            tagNameEsc = encodeURIComponent(tagName)
+            $.getJSON('/matches/' + tagNameEsc, function(data) {
+                    // clear existing matches
+                    $('#match-list').empty()
+                    
+                    if(data.length > 0) {
+                        // show the column heading
+                        $('#matches-heading').removeClass('hidden')
+                        
+                        // add an li for each returned obj
+                        $.each(data, function(index, match) {
+                                $('#match-list').append('<li>' + match.filename + '</li>')
+                        })
+                    } else {
+                        // show the column heading
+                        $('#matches-heading').addClass('hidden')
+                    }
+            })
+        }
+    
         function refreshTags() {
             $('#tag-list').empty()
             
@@ -19,6 +40,8 @@
                     $('#tag-list li').click( function() {
                         $('#tag-list .sel').removeClass('sel')
                         $(this).addClass('sel')
+                        
+                        refreshMatches($(this).text())
                     })
             })
         }
@@ -56,7 +79,7 @@
         <div id="mid-right-container">
             <div id="mcol">
                 <div class="col-pad">
-                    <h1 id="sel-tag"></h1>
+                    <h1 id="matches-heading" class="hidden">Matches</h1>
                     
                     <ol id="match-list">
                     </ol>

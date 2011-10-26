@@ -1,10 +1,14 @@
 import json
+import os.path
 from paste import httpserver, fileapp
+from routes import Mapper, URLGenerator
 from webob.dec import wsgify
 from webob import exc
 from webob import Response, Request
-from routes import Mapper, URLGenerator
-import os.path
+
+
+
+import mocks
 
 HOST = '127.0.0.1'
 PORT = 8080
@@ -15,6 +19,7 @@ class CatalogApp(object):
     map.connect('index', '/', method='index')
     map.connect('static', '/s/{filename}', method='static')
     map.connect('tags', '/tags', method='list_tags')
+    map.connect('matches', '/matches/{tag_name}', method='match_search')
     
     CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
 
@@ -44,47 +49,27 @@ class CatalogApp(object):
         req.environ['PATH_INFO'] = filename
         return req.get_response(self.dirapp)
         
+    def _mock_handler(self, fn):
+        '''
+        build a response, given a mock function
+        '''
+        resp = Response(
+            body=json.dumps(fn())
+        )
+        return resp
+        
     def list_tags(self, req):
         '''
         generate a JSON list of tags
         
         '''
-        resp = Response(
-            body=json.dumps([
-                'Absinthe dreams',
-                'Abstract Westerns',
-                'Aliens',
-                'Alter egos',
-                'Altered states',
-                'Alternative',
-                'Badminton',
-                'Barf',
-                'Bourgeoisie',
-                'Budget',
-                'Bullshit',
-                'Captialism',
-                'Communism',
-                'Construction',
-                'Electrical currents',
-                'Fables',
-                'Furious Cats',
-                'Gold rush',
-                'Hammers &amp; Hamsters',
-                'Librarian Propaganda',
-                'Marmoset documentaries',
-                'Mango production worldwide',
-                'Netherlands',
-                'Populism',
-                'Pretentious bullshit',
-                'Strychnine',
-                'Tow trucks',
-                'Underwater public transportation',
-                'Wilted vegetables',
-                'Xylophones',
-                'Zoological explosions',
-            ])
-        )
-        return resp
+        return self._mock_handler(mocks.list_tags)
+        
+    def match_search(self, req, tag_name=None):
+        '''
+        generate a JSON list of dicts, one per match
+        '''
+        return self._mock_handler(mocks.match_search)
 
 def main():
     app = CatalogApp()
