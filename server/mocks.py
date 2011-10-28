@@ -53,3 +53,9 @@ def match_search():
     
     # return a blank result on one out of three clicks
     return ret if random.randint(0,4) != 3 else []
+    
+def file_info():
+    return {
+        'filename': 'hello_kitty.flv',
+        'path': '/home/marmida/Videos/kawaii',
+    }

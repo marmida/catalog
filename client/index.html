@@ -8,9 +8,31 @@
     <script type="text/javascript" src="/s/splitter.js"></script>
 
     <script type="text/javascript">
+        /* refresh the right column with a single match */
+        function showMatch(filename) {
+            filenameEsc = encodeURIComponent(filename)
+            $.getJSON('/file/' + filenameEsc, function(data) {
+                    // clear right column
+                    $('#rcol').empty()
+                    
+                    // rebuild elements
+                    $('#rcol').append(
+                        '<h1>Info</h1>' +
+                        '<label>Filename</label>' + 
+                        '<p>' + data.filename + '</p>' + 
+                        '<label>Path</label>' + 
+                        '<p>' + data.path + '</p>'
+                    )
+            })
+        }
+    
+        /* refresh the middle column with results for a particular tag name */
         function refreshMatches(tagName) {
             tagNameEsc = encodeURIComponent(tagName)
             $.getJSON('/matches/' + tagNameEsc, function(data) {
+                    // clear right column
+                    $('#rcol').empty()
+                    
                     // clear existing matches
                     $('#match-list').empty()
                     
@@ -22,6 +44,12 @@
                         $.each(data, function(index, match) {
                                 $('#match-list').append('<li>' + match.filename + '</li>')
                         })
+                        $('#match-list li').click( function() {
+                            $('#match-list .sel').removeClass('sel')
+                            $(this).addClass('sel')
+                            
+                            showMatch($(this).text())
+                        })
                     } else {
                         // show the column heading
                         $('#matches-heading').addClass('hidden')
@@ -29,6 +57,7 @@
             })
         }
     
+        /* refresh the left column with tags */
         function refreshTags() {
             $('#tag-list').empty()
             
