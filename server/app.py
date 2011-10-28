@@ -20,7 +20,7 @@ class CatalogApp(object):
     map.connect('static', '/s/{filename}', method='static')
     map.connect('tags', '/tags', method='list_tags')
     map.connect('matches', '/matches/{tag_name}', method='match_search')
-    map.connect('file_info', '/file/{file_path}', method='file_info')
+    map.connect('file_info', '/file/{file_path:.*?}', method='file_info')
     
     CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
 
@@ -76,6 +76,7 @@ class CatalogApp(object):
         '''
         generate a JSON object describing a single file
         '''
+        print file_path
         return self._mock_handler(mocks.file_info)
 
 def main():

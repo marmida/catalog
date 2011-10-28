@@ -13,10 +13,10 @@
             filenameEsc = encodeURIComponent(filename)
             $.getJSON('/file/' + filenameEsc, function(data) {
                     // clear right column
-                    $('#rcol').empty()
+                    $('#rcol .col-pad').empty()
                     
                     // rebuild elements
-                    $('#rcol').append(
+                    $('#rcol .col-pad').append(
                         '<h1>Info</h1>' +
                         '<label>Filename</label>' + 
                         '<p>' + data.filename + '</p>' + 
@@ -31,7 +31,7 @@
             tagNameEsc = encodeURIComponent(tagName)
             $.getJSON('/matches/' + tagNameEsc, function(data) {
                     // clear right column
-                    $('#rcol').empty()
+                    $('#rcol .col-pad').empty()
                     
                     // clear existing matches
                     $('#match-list').empty()
@@ -42,7 +42,7 @@
                         
                         // add an li for each returned obj
                         $.each(data, function(index, match) {
-                                $('#match-list').append('<li>' + match.filename + '</li>')
+                                $('#match-list').append('<li>' + match.path + '</li>')
                         })
                         $('#match-list li').click( function() {
                             $('#match-list .sel').removeClass('sel')
@@ -79,8 +79,8 @@
 
             $('#splitter').splitter({
                     type: 'v',
-                    minLeft: 300, 
-                    sizeLeft: 350,
+                    minLeft: 150, 
+                    sizeLeft: 250,
                     /* maxLeft: 450, */
             })
             $('#mid-right-container').splitter({
