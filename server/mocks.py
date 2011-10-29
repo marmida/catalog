@@ -4,40 +4,48 @@ mock implementations
 '''
 import random
 
-def list_tags():
-    return [
-        'Absinthe dreams',
-        'Abstract Westerns',
-        'Aliens',
-        'Alter egos',
-        'Altered states',
-        'Alternative',
-        'Badminton',
-        'Barf',
-        'Bourgeoisie',
-        'Budget',
-        'Bullshit',
-        'Captialism',
-        'Communism',
-        'Construction',
-        'Electrical currents',
-        'Fables',
-        'Furious Cats',
-        'Gold rush',
-        'Hammers &amp; Hamsters',
-        'Librarian Propaganda',
-        'Marmoset documentaries',
-        'Mango production worldwide',
-        'Netherlands',
-        'Populism',
-        'Pretentious bullshit',
-        'Strychnine',
-        'Tow trucks',
-        'Underwater public transportation',
-        'Wilted vegetables',
-        'Xylophones',
-        'Zoological explosions',
-    ]
+BOGUS_TAGS = [
+    'Absinthe dreams',
+    'Abstract Westerns',
+    'Aliens',
+    'Alter egos',
+    'Altered states',
+    'Alternative',
+    'Badminton',
+    'Barf',
+    'Bourgeoisie',
+    'Budget',
+    'Bullshit',
+    'Captialism',
+    'Communism',
+    'Construction',
+    'Electrical currents',
+    'Fables',
+    'Furious Cats',
+    'Gold rush',
+    'Hammers &amp; Hamsters',
+    'Librarian Propaganda',
+    'Marmoset documentaries',
+    'Mango production worldwide',
+    'Netherlands',
+    'Populism',
+    'Pretentious bullshit',
+    'Strychnine',
+    'Tow trucks',
+    'Underwater public transportation',
+    'Wilted vegetables',
+    'Xylophones',
+    'Zoological explosions',
+]
+
+def populate_db(db):
+    ref = db.reference_node
+    with db.transaction:
+        tag_node = db.node()
+        ref.TAGS(tag_node)
+        
+        for tag_name in BOGUS_TAGS:
+            tag_node.IS_TAG(db.node(name=tag_name))
 
 def match_search():
     ret = [

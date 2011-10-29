@@ -1,13 +1,15 @@
 import json
+import neo4j
 import os.path
 from paste import httpserver, fileapp
 from routes import Mapper, URLGenerator
+import tempfile
 from webob.dec import wsgify
 from webob import exc
 from webob import Response, Request
 
 
-
+import models
 import mocks
 
 HOST = '127.0.0.1'
@@ -25,7 +27,20 @@ class CatalogApp(object):
     CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
 
     def __init__(self):
+        # create a dirapp for serving static content
         self.dirapp = fileapp.DirectoryApp(self.CLIENT_PATH)
+        
+        # create the database
+        self.db = neo4j.GraphDatabase(self._get_db_path())
+        
+        # populate the db with mock data
+        mocks.populate_db(self.db)
+        
+    def _get_db_path(self):
+        '''
+        return the path to the database
+        '''
+        return tempfile.mkdtemp()
 
     @wsgify
     def __call__(self, req):
@@ -50,21 +65,12 @@ class CatalogApp(object):
         req.environ['PATH_INFO'] = filename
         return req.get_response(self.dirapp)
         
-    def _mock_handler(self, fn):
-        '''
-        build a response, given a mock function
-        '''
-        resp = Response(
-            body=json.dumps(fn())
-        )
-        return resp
-        
     def list_tags(self, req):
         '''
         generate a JSON list of tags
         
         '''
-        return self._mock_handler(mocks.list_tags)
+        return models.list_tags(self.db)
         
     def match_search(self, req, tag_name=None):
         '''
@@ -76,7 +82,6 @@ class CatalogApp(object):
         '''
         generate a JSON object describing a single file
         '''
-        print file_path
         return self._mock_handler(mocks.file_info)
 
 def main():
