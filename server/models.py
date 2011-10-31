@@ -12,8 +12,6 @@ def _json_response(obj):
     return resp
         
 def list_tags(db):
-    with db.transaction:
-        tag_root_node = db.reference_node.TAGS.single.endNode
-        result = [tag_rel.endNode['name'] for tag_rel in tag_root_node.IS_TAG]
-    
-    return _json_response(result)
+    with db:
+        cursor = db.execute('select name from tags order by name asc')
+    return _json_response(cursor.fetchall())

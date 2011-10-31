@@ -1,5 +1,5 @@
 import json
-import neo4j
+import sqlite3
 import os.path
 from paste import httpserver, fileapp
 from routes import Mapper, URLGenerator
@@ -31,7 +31,7 @@ class CatalogApp(object):
         self.dirapp = fileapp.DirectoryApp(self.CLIENT_PATH)
         
         # create the database
-        self.db = neo4j.GraphDatabase(self._get_db_path())
+        self.db = sqlite3.connect(self._get_db_path())
         
         # populate the db with mock data
         mocks.populate_db(self.db)
@@ -40,7 +40,7 @@ class CatalogApp(object):
         '''
         return the path to the database
         '''
-        return tempfile.mkdtemp()
+        return os.path.join(tempfile.mkdtemp(), 'catalog.db')
 
     @wsgify
     def __call__(self, req):
@@ -70,6 +70,12 @@ class CatalogApp(object):
         generate a JSON list of tags
         
         '''
+        # threading problems: can't use the original sqlite db connection
+        # because it was created in the main thread; we're now in a worker thread
+        # uncommenting the next line allows a different error to be raised,
+        # since the db isn't initialized
+        
+        # self.db = sqlite3.connect(self._get_db_path())
         return models.list_tags(self.db)
         
     def match_search(self, req, tag_name=None):
@@ -86,7 +92,9 @@ class CatalogApp(object):
 
 def main():
     app = CatalogApp()
-    httpserver.serve(app, host='127.0.0.1', port=8080)
+    # trying to force the server to be single-threaded; not working
+    httpserver.serve(app, host='127.0.0.1', port=8080, use_threadpool=True, 
+        threadpool_workers=1, threadpool_options={'spawn_if_under': 1})
 
 if __name__ == '__main__':
     main()
