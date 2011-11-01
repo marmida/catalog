@@ -1,23 +1,23 @@
-import json
-import sqlite3
 import os.path
-from paste import httpserver, fileapp
-from routes import Mapper, URLGenerator
-import tempfile
-from webob.dec import wsgify
-from webob import exc
-from webob import Response, Request
+import paste.fileapp
+import paste.httpserver
+import Queue
+import routes
+import threading
+import webob.dec
+import webob.exc
 
 
-import models
+import db
 import mocks
+
 
 HOST = '127.0.0.1'
 PORT = 8080
 
 
 class CatalogApp(object):
-    map = Mapper()
+    map = routes.Mapper()
     map.connect('index', '/', method='index')
     map.connect('static', '/s/{filename}', method='static')
     map.connect('tags', '/tags', method='list_tags')
@@ -28,27 +28,22 @@ class CatalogApp(object):
 
     def __init__(self):
         # create a dirapp for serving static content
-        self.dirapp = fileapp.DirectoryApp(self.CLIENT_PATH)
+        self.dirapp = paste.fileapp.DirectoryApp(self.CLIENT_PATH)
         
         # create the database
-        self.db = sqlite3.connect(self._get_db_path())
+        self.db_queue = Queue.Queue()
+        self.db_thread = threading.Thread(group=None, target=db.DbThread(self.db_queue))
+        self.db_thread.daemon = True # exit the app when the main thread quits
+        self.db_thread.start()
         
-        # populate the db with mock data
-        mocks.populate_db(self.db)
-        
-    def _get_db_path(self):
-        '''
-        return the path to the database
-        '''
-        return os.path.join(tempfile.mkdtemp(), 'catalog.db')
 
-    @wsgify
+    @webob.dec.wsgify
     def __call__(self, req):
         results = self.map.routematch(environ=req.environ)
         if not results:
-            return exc.HTTPNotFound()
+            return webob.exc.HTTPNotFound()
         match, route = results
-        link = URLGenerator(self.map, req.environ)
+        link = routes.URLGenerator(self.map, req.environ)
         req.urlvars = ((), match)
         kwargs = match.copy()
         method = kwargs.pop('method')
@@ -70,13 +65,13 @@ class CatalogApp(object):
         generate a JSON list of tags
         
         '''
-        # threading problems: can't use the original sqlite db connection
-        # because it was created in the main thread; we're now in a worker thread
-        # uncommenting the next line allows a different error to be raised,
-        # since the db isn't initialized
+        class ListTagsRequest(object):
+            pass
         
-        # self.db = sqlite3.connect(self._get_db_path())
-        return models.list_tags(self.db)
+        request = ListTagsRequest()
+        self.db_queue.put(request)
+        self.db_queue.join()
+        return request.response
         
     def match_search(self, req, tag_name=None):
         '''
@@ -93,7 +88,7 @@ class CatalogApp(object):
 def main():
     app = CatalogApp()
     # trying to force the server to be single-threaded; not working
-    httpserver.serve(app, host='127.0.0.1', port=8080, use_threadpool=True, 
+    paste.httpserver.serve(app, host='127.0.0.1', port=8080, use_threadpool=True, 
         threadpool_workers=1, threadpool_options={'spawn_if_under': 1})
 
 if __name__ == '__main__':
