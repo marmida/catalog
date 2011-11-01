@@ -87,9 +87,7 @@ class CatalogApp(object):
 
 def main():
     app = CatalogApp()
-    # trying to force the server to be single-threaded; not working
-    paste.httpserver.serve(app, host='127.0.0.1', port=8080, use_threadpool=True, 
-        threadpool_workers=1, threadpool_options={'spawn_if_under': 1})
+    paste.httpserver.serve(app, host=HOST, port=PORT)
 
 if __name__ == '__main__':
     main()

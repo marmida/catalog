@@ -2,7 +2,6 @@
 Database routines and thread isolation
 '''
 
-import neo4j
 import os
 import tempfile
 
@@ -26,10 +25,11 @@ class DbThread(object):
         create a connection to the database and then go into an infinite loop,
         handling requests from a Queue
         '''
+        # don't import until we're in the new thread
+        import neo4j
+        
         # create the database
-        print 'about to create graph db'
         self.db = neo4j.GraphDatabase(self._get_db_path())
-        print '...done'
         
         # populate the db with mock data
         mocks.populate_db(self.db)
