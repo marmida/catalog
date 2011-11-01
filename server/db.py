@@ -2,8 +2,8 @@
 Database routines and thread isolation
 '''
 
+import neo4j
 import os
-import sqlite3
 import tempfile
 
 
@@ -19,7 +19,7 @@ class DbThread(object):
         '''
         return the path to the database
         '''
-        return os.path.join(tempfile.mkdtemp(), 'catalog.db')
+        return os.path.join(tempfile.mkdtemp())
 
     def __call__(self):
         '''
@@ -27,7 +27,9 @@ class DbThread(object):
         handling requests from a Queue
         '''
         # create the database
-        self.db = sqlite3.connect(self._get_db_path())
+        print 'about to create graph db'
+        self.db = neo4j.GraphDatabase(self._get_db_path())
+        print '...done'
         
         # populate the db with mock data
         mocks.populate_db(self.db)

@@ -39,19 +39,13 @@ BOGUS_TAGS = [
 ]
 
 def populate_db(db):
-    with db:
-        # create "tags" table
-        db.execute('''create table tags 
-            (
-                id INTEGER PRIMARY KEY,
-                name varchar(50) not null
-            )'''
-        )
-    
-    # add tags rows
-    with db:
+    ref = db.reference_node
+    with db.transaction:
+        tag_node = db.node()
+        ref.TAGS(tag_node)
+        
         for tag_name in BOGUS_TAGS:
-            db.execute('insert into tags (id, name) values (NULL, ?)', (tag_name,))
+            tag_node.IS_TAG(db.node(name=tag_name))
 
 def match_search():
     ret = [
