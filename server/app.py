@@ -26,7 +26,7 @@ class CatalogApp(object):
     map.connect('matches', '/matches/{tag_name}', method='match_search')
     map.connect('file_info', '/file/{file_path:.*?}', method='file_info')
     
-    CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client'))
+    CLIENT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'www'))
 
     def __init__(self):
         # create a dirapp for serving static content
