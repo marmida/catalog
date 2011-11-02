@@ -1,9 +1,11 @@
+import json
 import os.path
 import paste.fileapp
 import paste.httpserver
 import Queue
 import routes
 import threading
+import webob
 import webob.dec
 import webob.exc
 
@@ -32,9 +34,10 @@ class CatalogApp(object):
         
         # create the database
         self.db_queue = Queue.Queue()
-        self.db_thread = threading.Thread(group=None, target=db.DbThread(self.db_queue))
-        self.db_thread.daemon = True # exit the app when the main thread quits
-        self.db_thread.start()
+        self.db_thread = db.DbThread(self.db_queue) 
+        thread = threading.Thread(group=None, target=self.db_thread)
+        thread.daemon = True # exit the app when the main thread quits
+        thread.start()
         
 
     @webob.dec.wsgify
@@ -65,13 +68,11 @@ class CatalogApp(object):
         generate a JSON list of tags
         
         '''
-        class ListTagsRequest(object):
-            pass
-        
-        request = ListTagsRequest()
-        self.db_queue.put(request)
+        op = db.Op(self.db_thread.list_tags)
+        self.db_queue.put(op)
         self.db_queue.join()
-        return request.response
+
+        return _json_response(op.payload)
         
     def match_search(self, req, tag_name=None):
         '''
@@ -84,6 +85,16 @@ class CatalogApp(object):
         generate a JSON object describing a single file
         '''
         return self._mock_handler(mocks.file_info)
+
+# todo: turn into a decorator
+def _json_response(obj):
+    '''
+    build a response, given a function
+    '''
+    resp = webob.Response(
+        body=json.dumps(obj)
+    )
+    return resp
 
 def main():
     app = CatalogApp()
