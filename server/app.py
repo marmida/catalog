@@ -46,22 +46,21 @@ class CatalogApp(object):
         
     def __exit__(self, exc_type, exc_val, tb):
         'try to shutdown the database'
-        print 'CatalogApp.__exit__'
+        print 'shutting down...'
         
         # empty out the queue
         while not self.db_queue.empty():
-            print 'removing queue item...'
             self.db_queue.get(False)
             self.db_queue.task_done()
         
         # enqueue a shutdown request and block until it finishes
-        print 'enqueing shutdown request...'
         self.db_queue.put(db.Op(self.db_manager.shutdown))
         # join to the thread, not the queue, which should block until it exits
         self.db_thread.join()
         
-        print 'db shutdown complete'
         # no need to suppress exceptions
+        
+        print '...done'
 
     @webob.dec.wsgify
     def __call__(self, req):

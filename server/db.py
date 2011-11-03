@@ -3,6 +3,7 @@ Database routines and thread isolation
 '''
 
 import os
+import sqlite3
 import tempfile
 
 
@@ -38,18 +39,15 @@ class DbManager(object):
         '''
         return the path to the database
         '''
-        return os.path.join(tempfile.mkdtemp())
+        return os.path.join(tempfile.mkdtemp(), 'catalog.db')
 
     def __call__(self):
         '''
         create a connection to the database and then go into an infinite loop,
         handling requests from a Queue
         '''
-        # don't import until we're in the new thread
-        import neo4j
-        
         # create the database
-        self.db = neo4j.GraphDatabase(self._get_db_path())
+        self.db = sqlite3.connect(self._get_db_path())
         
         # populate the db with mock data
         mocks.populate_db(self.db)
@@ -60,21 +58,15 @@ class DbManager(object):
             self.queue.get()()
             # let the queue know we've handled this task
             self.queue.task_done()
-            
-        print 'DbThread exiting...'
 
     def list_tags(self):
-        with self.db.transaction:
-            tag_root_node = self.db.reference_node.TAGS.single.endNode
-            result = [tag_rel.endNode['name'] for tag_rel in tag_root_node.IS_TAG]
-    
-        return result
+        '''
+        return a list of available tags
+        '''
+        with self.db:
+            return self.db.execute('select name from tags order by name asc').fetchall()
 
     def shutdown(self):
-        'shut down the neo4j db cleanly'
-        print 'DbThread.shutdown...'
-        self.db.shutdown()
-        print '...neo4j shutdown complete'
-        
+        'mark this thread for exit'
         # let's quit on the next while loop iteration
         self._continue = False
