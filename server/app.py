@@ -34,11 +34,34 @@ class CatalogApp(object):
         
         # create the database
         self.db_queue = Queue.Queue()
-        self.db_thread = db.DbThread(self.db_queue) 
-        thread = threading.Thread(group=None, target=self.db_thread)
-        thread.daemon = True # exit the app when the main thread quits
-        thread.start()
+        self.db_manager = db.DbManager(self.db_queue) 
+        self.db_thread = threading.Thread(group=None, target=self.db_manager)
+        self.db_thread.daemon = True # exit the app when the main thread quits
+        self.db_thread.start()
         
+    # context manager support: handle database shutdown on exit
+    def __enter__(self):
+        'no-op; database init is handled in the constructor (is this wise?)'
+        return self
+        
+    def __exit__(self, exc_type, exc_val, tb):
+        'try to shutdown the database'
+        print 'CatalogApp.__exit__'
+        
+        # empty out the queue
+        while not self.db_queue.empty():
+            print 'removing queue item...'
+            self.db_queue.get(False)
+            self.db_queue.task_done()
+        
+        # enqueue a shutdown request and block until it finishes
+        print 'enqueing shutdown request...'
+        self.db_queue.put(db.Op(self.db_manager.shutdown))
+        # join to the thread, not the queue, which should block until it exits
+        self.db_thread.join()
+        
+        print 'db shutdown complete'
+        # no need to suppress exceptions
 
     @webob.dec.wsgify
     def __call__(self, req):
@@ -68,7 +91,7 @@ class CatalogApp(object):
         generate a JSON list of tags
         
         '''
-        op = db.Op(self.db_thread.list_tags)
+        op = db.Op(self.db_manager.list_tags)
         self.db_queue.put(op)
         self.db_queue.join()
 
@@ -97,8 +120,8 @@ def _json_response(obj):
     return resp
 
 def main():
-    app = CatalogApp()
-    paste.httpserver.serve(app, host=HOST, port=PORT)
+    with CatalogApp() as app:
+        paste.httpserver.serve(app, host=HOST, port=PORT)
 
 if __name__ == '__main__':
     main()

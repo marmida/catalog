@@ -29,9 +29,10 @@ class Op(object):
         '''
         self.payload = self.fn(*self.args, **self.kwargs)
         
-class DbThread(object):
+class DbManager(object):
     def __init__(self, queue):
         self.queue = queue
+        self._continue = True
 
     def _get_db_path(self):
         '''
@@ -54,11 +55,13 @@ class DbThread(object):
         mocks.populate_db(self.db)
         
         # processing loop
-        while True:
+        while self._continue:
             # fetch the first item from the queue and execute it
             self.queue.get()()
             # let the queue know we've handled this task
             self.queue.task_done()
+            
+        print 'DbThread exiting...'
 
     def list_tags(self):
         with self.db.transaction:
@@ -67,3 +70,11 @@ class DbThread(object):
     
         return result
 
+    def shutdown(self):
+        'shut down the neo4j db cleanly'
+        print 'DbThread.shutdown...'
+        self.db.shutdown()
+        print '...neo4j shutdown complete'
+        
+        # let's quit on the next while loop iteration
+        self._continue = False
