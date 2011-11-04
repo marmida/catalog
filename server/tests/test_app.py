@@ -51,7 +51,7 @@ class RoutingTest(unittest.TestCase):
         resp = req.get_response(application)
         
         # unpack json
-        print resp.body
+        print 'response status %s body %s' % (resp.status, resp.body)
         tag_list = json.loads(resp.body)
         
         self.assertTrue('Librarian Propaganda' in tag_list)

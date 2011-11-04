@@ -84,29 +84,37 @@ class CatalogApp(object):
         # set the PATH_INFO to just filename, overriding the original URI 
         req.environ['PATH_INFO'] = filename
         return req.get_response(self.dirapp)
-        
+    
+    def _db_op(self, fn, *args, **kwargs):
+        '''
+        Run a callable in the database thread and return the result.
+        '''
+        op = db.Op(fn, *args, **kwargs)
+        self.db_queue.put(op)
+        self.db_queue.join()
+
+        return op.payload
+
+    # entry points from routes
+    # todo: figure out how to unify these; they're very repetitive
     def list_tags(self, req):
         '''
         generate a JSON list of tags
         
         '''
-        op = db.Op(self.db_manager.list_tags)
-        self.db_queue.put(op)
-        self.db_queue.join()
-
-        return _json_response(op.payload)
+        return _json_response(self._db_op(self.db_manager.list_tags))
         
     def match_search(self, req, tag_name=None):
         '''
-        generate a JSON list of dicts, one per match
+        generate a JSON list of dicts, one per match, associated with a tag
         '''
-        return self._mock_handler(mocks.match_search)
+        return _json_response(self._db_op(self.db_manager.match_search, tag_name))
         
     def file_info(self, req, file_path=None):
         '''
         generate a JSON object describing a single file
         '''
-        return self._mock_handler(mocks.file_info)
+        return _json_response(self._db_op(self.db_manager.file_info, file_path))
 
 # todo: turn into a decorator
 def _json_response(obj):
