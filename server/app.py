@@ -12,7 +12,6 @@ import webob.exc
 
 
 import db
-import mocks
 
 
 HOST = '127.0.0.1'

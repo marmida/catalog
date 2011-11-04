@@ -7,9 +7,6 @@ import sqlite3
 import tempfile
 
 
-import mocks
-
-
 class Op(object):
     '''
     A deferred callback that captures results in member vars.
@@ -30,6 +27,11 @@ class Op(object):
         self.payload = self.fn(*self.args, **self.kwargs)
         
 class DbManager(object):
+    '''
+    Segregated interaction with the database; meant to be used as a callable
+    target for a threading.Thread instance.  Fetches callables a Queue and 
+    processes them.  Exits once the _contiue attr is False.  
+    '''
     def __init__(self, queue, path):
         self.queue = queue
         self._continue = True
