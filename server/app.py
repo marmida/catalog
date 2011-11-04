@@ -1,3 +1,4 @@
+import configobj
 import json
 import os.path
 import paste.fileapp
@@ -17,6 +18,10 @@ import mocks
 HOST = '127.0.0.1'
 PORT = 8080
 
+CONFIG_DIR = '~/.marmida_catalog'
+CONFIG_FILENAME = 'config'
+DATABASE_FILENAME = 'db'
+
 
 class CatalogApp(object):
     map = routes.Mapper()
@@ -32,12 +37,40 @@ class CatalogApp(object):
         # create a dirapp for serving static content
         self.dirapp = paste.fileapp.DirectoryApp(self.CLIENT_PATH)
         
+        # get the current configuration
+        self.config = self._get_config()
+        
         # create the database
         self.db_queue = Queue.Queue()
-        self.db_manager = db.DbManager(self.db_queue) 
+        self.db_manager = db.DbManager(self.db_queue, self.config['db_path'])
         self.db_thread = threading.Thread(group=None, target=self.db_manager)
         self.db_thread.daemon = True # exit the app when the main thread quits
         self.db_thread.start()
+        
+    # configuration handling
+    def _get_config(self):
+        '''
+        Return a ConfigObj instance representing the current configuration values
+        If no configuration is currently on disk, create one with defaults
+        '''
+        config_path = os.path.expanduser(os.path.join(CONFIG_DIR, CONFIG_FILENAME))
+        if not os.path.exists(config_path):
+            return self._create_default_config(config_path)
+        return configobj.ConfigObj(config_path)
+        
+    def _create_default_config(self, path):
+        '''
+        Create a config file with sensible defaults and return a ConfigObj
+        '''
+        config_dir = os.path.dirname(path)
+        if not os.path.isdir(config_dir):
+            os.makedirs(config_dir)
+        
+        config = configobj.ConfigObj()
+        config.filename = path
+        config['db_path'] = os.path.join(config_dir, DATABASE_FILENAME)
+        config.write()
+        return config
         
     # context manager support: handle database shutdown on exit
     def __enter__(self):
