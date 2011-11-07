@@ -7,7 +7,7 @@
     padding: 4px;
 }
 
-#splitter div {
+#splitter > div {
     overflow: auto;
 }
 
@@ -40,5 +40,18 @@ a {
 
 .hidden {
     visibility: hidden;
+    display: none;
+}
+
+.r {
+    float: right;
+}
+
+h1 {
+    margin: 0;
+}
+
+
+#dialog-form {
     display: none;
 }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Catalog - Manage Tags</title>
+    <link href="/s/jquery-ui-1.8.16.custom.css" type="text/css" rel="stylesheet">
+    <link href="/s/main.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/s/jquery.min.js"></script>
+    <script type="text/javascript" src="/s/jquery-ui-1.8.16.custom.min.js"></script>
+    
+    <script type="text/javascript">
+        /* refresh the left column with tags */
+        function refreshTags() {
+            $('#tag-list').empty()
+            
+            // todo: investigate replacing this with jquery's ajax converters
+            $.getJSON('/tags', function(data) {
+                    $.each(data, function(index, tagName) {
+                        $('#tag-list').append('<li>' + tagName + '</li>')
+                    })
+                    $('#tag-list li').click( function() {
+                        $('#tag-list .sel').removeClass('sel')
+                        $(this).addClass('sel')
+                    })
+            })
+        }
+    
+        $().ready(function() {
+            refreshTags()
+            $('#add-btn').click( function() {
+                    $('#dialog-form').dialog({
+                            autoOpen: true,
+                            height: 300,
+                            width: 350,
+                            modal: true,
+                            buttons: {
+                                "Add": function () {
+                                    name = $('#add-name').val()
+                                    if(name) {
+                                        // there's at least something in the form field, try to send it to the server
+                                        $.ajax(
+                                            '/tag',
+                                            {
+                                                'type': 'PUT',
+                                                'data': JSON.stringify({'name': name}),
+                                                'success': function (data, textStatus, jqXHR) {
+                                                    $('#dialog-form').dialog("close")
+                                                    $('#add-name').val('')
+                                                    refreshTags()
+                                                },
+                                            }
+                                        )
+                                    }
+                                },
+                                "Cancel": function () {
+                                    $(this).dialog("close")
+                                }
+                            },
+                    })
+            })
+        });         
+    </script>
+</head>
+<body>
+    <div id="dialog-form" title="Add Tag">
+        <form>
+            <label for="name">Name</label>
+            <input type="text" name="name" id="add-name"/>
+        </form>
+    </div>
+
+    <div><a href="/">&lt;&lt;</a></div>
+    
+    <h1>Tags</h1>
+    
+    <p><a id="add-btn" href="#">Add</a> <a href="#">Edit</a></p>
+    <ol id="tag-list">
+    </ol>
+
+</body>
+</html>

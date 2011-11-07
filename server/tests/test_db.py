@@ -111,3 +111,29 @@ class DbManagerExtantTest(unittest.TestCase):
         dbm()
         
         self.assertEquals(['goodbye', 'hello', 'what'], dbm.list_tags())
+        
+class DbManagerTest(unittest.TestCase):
+    '''
+    test DbManager methods
+    '''
+    def setUp(self):
+        self.temp_fp = tempfile.NamedTemporaryFile()
+        self.dbm = db.DbManager(None, self.temp_fp.name)
+        self.dbm.db = sqlite3.connect(self.temp_fp.name)
+        self.dbm._create_schema()
+        
+    def tearDown(self):
+        self.temp_fp.close()
+        
+    def test_create_or_update(self):
+        '''
+        DbManager.create_or_update_tag: creates a tag, and then update it in a second call. 
+        '''
+        self.dbm.create_or_update_tag('Hello')
+        self.assertEquals(['Hello'],  [i[0] for i in self.dbm.db.execute('select name from tags')])
+        
+        self.dbm.create_or_update_tag('Goodbye', 'Hello')
+        self.assertEquals(['Goodbye'],  [i[0] for i in self.dbm.db.execute('select name from tags')])
+        
+        self.assertRaises(ValueError, self.dbm.create_or_update_tag, 'apples', 'oranges')
+

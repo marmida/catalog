@@ -37,6 +37,7 @@ class DbManager(object):
         self._continue = True
         self.path = path
 
+    # connection lifecycle
     def __call__(self):
         '''
         create a connection to the database and then go into an infinite loop,
@@ -54,7 +55,18 @@ class DbManager(object):
             self.queue.get()()
             # let the queue know we've handled this task
             self.queue.task_done()
-            
+    
+    def shutdown(self):
+        '''
+        Mark this thread for exit.
+        
+        Originally this needed to be a thread-isolated callback, just like the 
+        other db functions, because neo4j.GraphDatabase.shutdown had to be 
+        called.  Now that we're back to sqlite, it's probably unnecessary.
+        '''
+        # let's quit on the next while loop iteration
+        self._continue = False
+    
     # schema creation
     def _schema_exists(self):
         '''
@@ -66,16 +78,23 @@ class DbManager(object):
         '''
         create the necessary tables in the database
         '''
-        with self.db:
-            # create "tags" table
-            self.db.execute('''create table tags 
-                (
-                    id INTEGER PRIMARY KEY,
-                    name varchar(50) not null
-                )'''
-            )
+        table_schemas = [
+            ('tags', ['id INTEGER PRIMARY KEY', 'name varchar(50) not null']),
+            ('files', ['id INTEGER PRIMARY KEY', 'path varchar(255) not null']),
+            ('map_tags_files', ['tag_id integer not null', 'file_id integer not null']),
+        ]
+        
+        for i in table_schemas:
+            with self.db:
+                # create "tags" table
+                self.db.execute('''
+                    create table %s 
+                    (
+                        %s
+                    )''' % (i[0], ', '.join(i[1]))
+                )
     
-    # normal db routines
+    # db access and modification routines
     def list_tags(self):
         '''
         return a list of available tags
@@ -95,14 +114,23 @@ class DbManager(object):
         generate a JSON object describing a single file
         '''
         return {}
-
-    def shutdown(self):
-        '''
-        Mark this thread for exit.
         
-        Originally this needed to be a thread-isolated callback, just like the 
-        other db functions, because neo4j.GraphDatabase.shutdown had to be 
-        called.  Now that we're back to sqlite, it's probably unnecessary.
+    def create_or_update_tag(self, new_tag_name, old_tag_name=None):
         '''
-        # let's quit on the next while loop iteration
-        self._continue = False
+        create a new tag, or update an old tag with a new name
+        '''
+        with self.db:
+            try: 
+                old_tag_id = self.db.execute('select id from tags where name=?', (old_tag_name,)).fetchone()[0] \
+                        if old_tag_name else False
+            except TypeError:
+                # fetchone() returned None; so our subscript caused a TypeError
+                raise ValueError('original tag name does not exist: %s' % old_tag_name)
+        
+        with self.db:
+            if old_tag_name:
+                if not old_tag_id:
+                    raise Exception('uh oh')
+                self.db.execute('update tags set name=? where id=?', (new_tag_name, old_tag_id))
+            else:
+                self.db.execute('insert into tags (name) values (?)', (new_tag_name,))

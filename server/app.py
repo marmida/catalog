@@ -26,6 +26,8 @@ class CatalogApp(object):
     map = routes.Mapper()
     map.connect('index', '/', method='index')
     map.connect('static', '/s/{filename}', method='static')
+    map.connect('tag', '/tag', method='edit_tag')
+    map.connect('tag', '/tag/{tag_name}', method='edit_tag')
     map.connect('tags', '/tags', method='list_tags')
     map.connect('matches', '/matches/{tag_name}', method='match_search')
     map.connect('file_info', '/file/{file_path:.*?}', method='file_info')
@@ -129,6 +131,12 @@ class CatalogApp(object):
 
     # entry points from routes
     # todo: figure out how to unify these; they're very repetitive
+    def edit_tag(self, req, tag_name=None):
+        '''
+        Edit or create a new tag based on posted data.
+        '''
+        self._db_op(self.db_manager.create_or_update_tag, json.loads(req.body)['name'], tag_name) 
+    
     def list_tags(self, req):
         '''
         generate a JSON list of tags
