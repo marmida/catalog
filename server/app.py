@@ -135,7 +135,11 @@ class CatalogApp(object):
         '''
         Edit or create a new tag based on posted data.
         '''
-        self._db_op(self.db_manager.create_or_update_tag, json.loads(req.body)['name'], tag_name) 
+        new_tag_name = json.loads(req.body)['name'] if req.body else None
+        if req.method in ['PUT', 'POST']:
+            self._db_op(self.db_manager.create_or_update_tag, new_tag_name, tag_name)
+        elif req.method == 'DELETE':
+            self._db_op(self.db_manager.delete_tag, tag_name)
     
     def list_tags(self, req):
         '''

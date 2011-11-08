@@ -52,6 +52,6 @@ h1 {
 }
 
 
-#dialog-form {
+#addedit-dialog, #delete-dialog {
     display: none;
 }

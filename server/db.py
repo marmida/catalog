@@ -120,6 +120,11 @@ class DbManager(object):
         create a new tag, or update an old tag with a new name
         '''
         with self.db:
+            # prevent duplicates
+            if self.db.execute('select count(*) as ct from tags where name=?', (new_tag_name,)).fetchone()[0] > 0:
+                raise ValueError('tag already exists: %s' % new_tag_name)
+        
+        with self.db:
             try: 
                 old_tag_id = self.db.execute('select id from tags where name=?', (old_tag_name,)).fetchone()[0] \
                         if old_tag_name else False
@@ -134,3 +139,13 @@ class DbManager(object):
                 self.db.execute('update tags set name=? where id=?', (new_tag_name, old_tag_id))
             else:
                 self.db.execute('insert into tags (name) values (?)', (new_tag_name,))
+                
+    def delete_tag(self, tag_name):
+        '''
+        Delete a tag and its relationships to any files
+        '''
+        tag_id = self.db.execute('select id from tags where name=?', (tag_name,)).fetchone()[0]
+        with self.db:
+            self.db.execute('delete from map_tags_files where tag_id = ?', (tag_id,))
+            self.db.execute('delete from tags where id = ?', (tag_id,))
+            

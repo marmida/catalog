@@ -28,13 +28,15 @@
         $().ready(function() {
             refreshTags()
             $('#add-btn').click( function() {
-                    $('#dialog-form').dialog({
+                    $('#addedit-dialog').dialog({
                             autoOpen: true,
-                            height: 300,
+                            height: 180,
                             width: 350,
                             modal: true,
                             buttons: {
                                 "Add": function () {
+                                    // todo: prevent duplicate tag names
+                                    
                                     name = $('#add-name').val()
                                     if(name) {
                                         // there's at least something in the form field, try to send it to the server
@@ -44,7 +46,7 @@
                                                 'type': 'PUT',
                                                 'data': JSON.stringify({'name': name}),
                                                 'success': function (data, textStatus, jqXHR) {
-                                                    $('#dialog-form').dialog("close")
+                                                    $('#addedit-dialog').dialog("close")
                                                     $('#add-name').val('')
                                                     refreshTags()
                                                 },
@@ -58,22 +60,92 @@
                             },
                     })
             })
-        });         
+            $('#edit-btn').click( function() {
+                    orig_name = $('li.sel').text()
+                    $('#add-name').val(orig_name)
+                    $('#addedit-dialog').dialog({
+                            autoOpen: true,
+                            height: 180,
+                            width: 350,
+                            modal: true,
+                            buttons: {
+                                 "Update": function () {
+                                    // todo: prevent duplicate tag names
+                                    
+                                    name = $('#add-name').val()
+                                    if(name) {
+                                        // there's at least something in the form field, try to send it to the server
+                                        $.ajax(
+                                            '/tag/' + encodeURIComponent(orig_name),
+                                            {
+                                                'type': 'POST',
+                                                'data': JSON.stringify({'name': name}),
+                                                'success': function (data, textStatus, jqXHR) {
+                                                    $('#addedit-dialog').dialog("close")
+                                                    $('#add-name').val('')
+                                                    refreshTags()
+                                                },
+                                            }
+                                        )
+                                    }
+                                },
+                                "Cancel": function () {
+                                    $(this).dialog("close")
+                                }
+                            }
+                    })
+            })
+            $('#delete-btn').click( function() {
+                    tag_name = $('li.sel').text()
+                    $('#delete-dialog span').text(tag_name)
+                    $('#delete-dialog').dialog({
+                            height: 230,
+                            width: 350,
+                            modal: true,
+                            buttons: {
+                                "Cancel": function () {
+                                    $('#delete-dialog').dialog("close")
+                                },
+                                "Delete": function() {
+                                    $.ajax(
+                                        '/tag/' + encodeURIComponent(tag_name),
+                                        {
+                                            'type': 'DELETE',
+                                            'success': function (data, textStatus, jqXHR) {
+                                                $('#delete-dialog').dialog("close")
+                                                refreshTags()
+                                            },
+                                        }
+                                    )
+                                }
+                            },
+                    })
+            })
+        });
     </script>
 </head>
 <body>
-    <div id="dialog-form" title="Add Tag">
+    <div id="addedit-dialog" title="Add Tag">
         <form>
             <label for="name">Name</label>
             <input type="text" name="name" id="add-name"/>
         </form>
+    </div>
+    
+    <div id="delete-dialog" title="Delete this tag?">
+        <p>This will remove the tag <span></span>.  Movies tagged with this 
+        tag will not be affected.</p>
     </div>
 
     <div><a href="/">&lt;&lt;</a></div>
     
     <h1>Tags</h1>
     
-    <p><a id="add-btn" href="#">Add</a> <a href="#">Edit</a></p>
+    <p>
+        <a id="add-btn" href="#">Add</a>
+        <a id="edit-btn" href="#">Edit</a>
+        <a id="delete-btn" href="#">Delete</a>
+    </p>
     <ol id="tag-list">
     </ol>
 
