@@ -42,7 +42,7 @@
                         
                         // add an li for each returned obj
                         $.each(data, function(index, match) {
-                                $('#match-list').append('<li>' + match.path + '</li>')
+                                $('#match-list').append('<li>' + match + '</li>')
                         })
                         $('#match-list li').click( function() {
                             $('#match-list .sel').removeClass('sel')

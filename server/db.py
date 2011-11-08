@@ -102,12 +102,19 @@ class DbManager(object):
         with self.db:
             return [i[0] for i in self.db.execute('select name from tags order by name asc')]
             
-    def match_search(self):
+    def match_search(self, tag_name):
         '''
-        return a list of dicts, one per match, associated with a tag
+        return a list of file paths associated with a tag
         '''
         with self.db:
-            return []
+            return [i[0] for i in self.db.execute(
+                '''
+                select path
+                from files inner join map_tags_files 
+                on map_tags_files.file_id = files.id
+                inner join tags 
+                on map_tags_files.tag_id = tags.id
+                where tags.name = ?''', (tag_name,))]
             
     def file_info(self, req, file_path=None):
         '''
