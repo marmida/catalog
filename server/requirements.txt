@@ -1,7 +1,9 @@
 # ubuntu system packages:
 # - python-jpype
 
+flask
 neo4j-embedded
-paste
-routes
-webob
+
+# testing
+behave
+requests
