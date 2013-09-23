@@ -1,6 +1,13 @@
 '''
 Database routines and thread isolation
 '''
+# This sucks, but without it, /usr/lib/python2.7/dist-packages is not
+# included in sys.path, so the system-installed python-jpype package
+# will not be accessible.
+# See: https://groups.google.com/forum/#!topic/python-virtualenv/FBKZRYDwosY
+import sys
+sys.path.append('/usr/lib/python2.7/dist-packages')
+
 
 import os
 import tempfile

@@ -1,3 +1,6 @@
+# ubuntu system packages:
+# - python-jpype
+
 neo4j-embedded
 paste
 routes
