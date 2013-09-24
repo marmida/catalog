@@ -1,5 +1,7 @@
 '''
-Database routines and thread isolation
+We expect that neo4j is thread-safe now, and should be accessible from
+any of the Flask threads.  This module exposes a singleton for the app,
+
 '''
 # This sucks, but without it, /usr/lib/python2.7/dist-packages is not
 # included in sys.path, so the system-installed python-jpype package
@@ -8,10 +10,8 @@ Database routines and thread isolation
 import sys
 sys.path.append('/usr/lib/python2.7/dist-packages')
 
-
 import os
 import tempfile
-
 
 import mocks
 
@@ -58,9 +58,7 @@ class DbManager(object):
         # create the database
         self.db = neo4j.GraphDatabase(self._get_db_path())
         
-        # populate the db with mock data
-        mocks.populate_db(self.db)
-        
+    
         # processing loop
         while self._continue:
             # fetch the first item from the queue and execute it

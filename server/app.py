@@ -1,12 +1,21 @@
 '''
 Backend web application module.  Uses flask.
 '''
+# This sucks, but without it, /usr/lib/python2.7/dist-packages is not
+# included in sys.path, so the system-installed python-jpype package
+# will not be accessible.
+# See: https://groups.google.com/forum/#!topic/python-virtualenv/FBKZRYDwosY
+import sys
+sys.path.append('/usr/lib/python2.7/dist-packages')
+
+
 from argparse import ArgumentParser
 from flask import Flask
 import json
+import mocks
+import neo4j
 import os.path
-import Queue
-import threading
+import tempfile
 
 import db
 
@@ -17,6 +26,7 @@ CLIENT_PATH = os.path.normpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         'www'))
+THE_DB = None
         
 @APP.route('/tags')        
 def list_tags():
@@ -24,19 +34,11 @@ def list_tags():
     generate a JSON list of tags
     
     '''
-    # TEMPORARY INSANITY: we'll remove the threading bit later.
-    # JPype + Neo should be usable from all Flask threads after their bugfix
-    db_queue = Queue.Queue()
-    db_manager = db.DbManager(db_queue) 
-    db_thread = threading.Thread(group=None, target=db_manager)
-    db_thread.daemon = True # exit the app when the main thread quits
-    db_thread.start()
-
-    op = db.Op(db_manager.list_tags)
-    db_queue.put(op)
-    db_queue.join()
-
-    return json.dumps(op.payload)
+    with THE_DB.transaction:
+        tag_root_node = THE_DB.reference_node.TAGS.single.endNode
+        result = [tag_rel.endNode['name'] for tag_rel in tag_root_node.IS_TAG]
+    
+    return json.dumps(result)
 
 @APP.route('/matches/<tagname>')        
 def match_search(tagname):
@@ -61,7 +63,17 @@ def parse_args():
 
 def main():
     args = parse_args()
-    APP.run(host=args.interface, port=args.port, debug=args.debug)
+
+    global THE_DB
+    THE_DB = neo4j.GraphDatabase(tempfile.mkdtemp())
+    mocks.populate_db(THE_DB)
+
+    try:
+        APP.run(host=args.interface, port=args.port, debug=args.debug)
+    except KeyboardInterrupt:
+        pass
+
+    THE_DB.shutdown()
 
 if __name__ == '__main__':
     main()
